@@ -5,11 +5,15 @@ module ServerSide.InternalTypes
         , NodeRecord
         , Facts
         , decodeNodeType
+        , div
+        , emptyFacts
+        , html
         )
 
 -- where
 
 import Dict exposing (Dict)
+import Html exposing (Attribute, Html)
 import Json.Encode
 import Json.Decode exposing ((:=))
 import ServerSide.Constants exposing (..)
@@ -44,6 +48,45 @@ type alias Facts =
     , stringOthers : Dict String String
     , boolOthers : Dict String Bool
     }
+
+
+html : NodeType -> Html a
+html x =
+    case x of
+        TextTag { text } ->
+            Html.text text
+
+        NodeEntry { tag, children, facts } ->
+            Html.node tag (attributes facts) (List.map html children)
+
+        NoOp ->
+            Html.text ""
+
+
+attributes : Facts -> List (Attribute a)
+attributes _ =
+    []
+
+
+emptyFacts : Facts
+emptyFacts =
+    { styles = Dict.empty
+    , events = Nothing
+    , attributes = Nothing
+    , attributeNamespace = Nothing
+    , stringOthers = Dict.empty
+    , boolOthers = Dict.empty
+    }
+
+
+div : Facts -> List NodeType -> NodeType
+div facts children =
+    NodeEntry
+        { tag = "div"
+        , children = children
+        , facts = facts
+        , descendantsCount = 0
+        }
 
 
 decodeNodeType : Json.Decode.Decoder NodeType
